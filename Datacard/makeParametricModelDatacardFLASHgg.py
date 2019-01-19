@@ -135,7 +135,8 @@ flashggProc = {'ggH_hgg':'ggh','qqH_hgg':'vbf','VH':'wzh','WH_hgg':'wh','ZH_hgg'
 if options.doSTXS: 
   flashggProc = {'ggH_hgg':'GG2H','qqH_hgg':'VBF','ttH_hgg':'TTH','WH_lep_hgg':'QQ2HLNU','ZH_lep_hgg':'QQ2HLL','WH_had_hgg':'WH2HQQ','ZH_had_hgg':'ZH2HQQ','bbH_hgg':'testBBH','tHq_hgg':'testTHQ','tHW_hgg':'testTHW','bkg_mass':'bkg_mass'}
 procId = {'ggH_hgg':0,'qqH_hgg':-1,'ttH_hgg':-2,'WH_lep_hgg':-2,'ZH_lep_hgg':-3,'WH_had_hgg':-4,'ZH_had_hgg':-5,'bbH_hgg':-6,'tHq_hgg':-7,'tHW_hgg':-8,'bkg_mass':1}
-bkgProcs = ['bkg_mass','bbH_hgg','tHq_hgg','tHW_hgg'] #what to treat as background
+#CHANGED FOR TTH only: including all but ttH as a background
+bkgProcs = ['bkg_mass','bbH_hgg','tHq_hgg','tHW_hgg','ggH_hgg','qqH_hgg','WH_lep_hgg','ZH_lep_hgg','WH_had_hgg','ZH_had_hgg'] #what to treat as background
 #Determine if VH or WZH_hgg
 splitVH=False
 if 'wzh'in options.procs.split(','):
@@ -164,6 +165,7 @@ tightLepCat=[]
 looseLepCat=[]
 metCat=[]
 #fill
+#FIXME these labels are out of date
 for i in range(len(options.cats)):
   if "Untagged" in options.cats[i]:
     incCats.append(options.cats[i])
@@ -283,17 +285,19 @@ theorySystAbsScale={}
 #theorySystAbsScale['names_to_consider'] = ["QCDscale_qqbar_up","QCDscale_gg_up","QCDscale_qqbar_down","QCDscale_gg_down","pdf_alphaS_qqbar","pdf_alphaS_gg"]  
 #theorySystAbsScale['names'] = ["QCDscale_qqbar_up","QCDscale_gg_up","QCDscale_qqbar_down","QCDscale_gg_down","pdf_alphaS_qqbar","pdf_alphaS_gg"] 
 #theorySystAbsScale['names_to_consider'] =   ["QCDscale_ggH_up",  "QCDscale_qqH_up",  "QCDscale_VH_up",  "QCDscale_ttH_up",  "QCDscale_ggH_down",  "QCDscale_qqH_down",  "QCDscale_VH_down",  "QCDscale_ttH_down",  "pdf_Higgs_qqbar",  "pdf_alphaS_gg",  "pdf_alphaS_ttH"] #QCD scale up, QCD scale down, PDF+alpha S, PDF, alpha S 
+
 theorySystAbsScale['names'] =   ["QCDscale_ggH_up",  "QCDscale_qqH_up",  "QCDscale_VH_up",  "QCDscale_ttH_up",  "QCDscale_ggH_down",  "QCDscale_qqH_down",  "QCDscale_VH_down",  "QCDscale_ttH_down",  "pdf_Higgs_qqbar",  "pdf_Higgs_gg",  "pdf_Higgs_ttH"] #QCD scale up, QCD scale down, PDF+alpha S, PDF, alpha S 
-theorySystAbsScale['ttH_hgg'] = [0.0,                 0.0,                0.0,               0.058,              0.0,                   0.0,                 0.0,                 -0.092,               0.0,                0.0,              0.036] # ttH is a _qqbar process
-theorySystAbsScale['ZH_lep_hgg'] =  [0.0,                 0.0,                0.038,             0.0,                0.0,                   0.0,                 -0.03,               0.0,                  0.016,              0.0,              0.0] # WH is a _qqbar process
-theorySystAbsScale['ZH_had_hgg'] =  [0.0,                 0.0,                0.038,             0.0,                0.0,                   0.0,                 -0.03,               0.0,                  0.016,              0.0,              0.0] # WH is a _qqbar process
-theorySystAbsScale['WH_lep_hgg'] =  [0.0,                 0.0,                0.005,             0.0,                0.0,                   0.0,                 -0.007,              0.0,                  0.019,              0.0,              0.0] # ZH is a _qqbar process
-theorySystAbsScale['WH_had_hgg'] =  [0.0,                 0.0,                0.005,             0.0,                0.0,                   0.0,                 -0.007,              0.0,                  0.019,              0.0,              0.0] # ZH is a _qqbar process
-theorySystAbsScale['qqH_hgg'] = [0.0,                 0.004,              0.0,               0.0,                0.0,                   -0.003,              0.0,                 0.0,                  0.021,              0.0,              0.0] # qqH is a _qqbar process
-theorySystAbsScale['bbH_hgg'] = [0.0,                 0.0,                0.0,               0.202,              0.0,                   0.0,                 0.0,                 -0.239,               0.0,                0.0,              0.036] # ttH is a _qqbar process
-theorySystAbsScale['tHq_hgg'] = [0.0,                 0.0,                0.0,               0.065,              0.0,                   0.0,                 0.0,                 -0.149,               0.0,                0.0,              0.036] # ttH is a _qqbar process
-theorySystAbsScale['tHW_hgg'] = [0.0,                 0.0,                0.0,               0.049,              0.0,                   0.0,                 0.0,                 -0.067,               0.0,                0.0,              0.036] # ttH is a _qqbar process
-theorySystAbsScale['ggH_hgg'] = [0.039,               0.0,                0.0,               0.0,                -0.039,               0.0,                  0.0,                 0.0,                  0.0,                0.032,            0.0] # GGH is a _gg process
+
+theorySystAbsScale['ttH_hgg'] =     [0.0,                 0.0,                0.0,               0.058,              0.0,                   0.0,                 0.0,                 -0.092,               0.0,                0.0,             0.036] # ttH is a _qqbar process
+theorySystAbsScale['ZH_lep_hgg'] =  [0.0,                 0.0,                0.038,             0.0,                0.0,                   0.0,                 -0.03,               0.0,                  0.016,              0.0,             0.0] # WH is a _qqbar process
+theorySystAbsScale['ZH_had_hgg'] =  [0.0,                 0.0,                0.038,             0.0,                0.0,                   0.0,                 -0.03,               0.0,                  0.016,              0.0,             0.0] # WH is a _qqbar process
+theorySystAbsScale['WH_lep_hgg'] =  [0.0,                 0.0,                0.005,             0.0,                0.0,                   0.0,                 -0.007,              0.0,                  0.019,              0.0,             0.0] # ZH is a _qqbar process
+theorySystAbsScale['WH_had_hgg'] =  [0.0,                 0.0,                0.005,             0.0,                0.0,                   0.0,                 -0.007,              0.0,                  0.019,              0.0,             0.0] # ZH is a _qqbar process
+theorySystAbsScale['qqH_hgg'] =     [0.0,                 0.004,              0.0,               0.0,                0.0,                   -0.003,              0.0,                 0.0,                  0.021,              0.0,             0.0] # qqH is a _qqbar process
+theorySystAbsScale['bbH_hgg'] =     [0.0,                 0.0,                0.0,               0.202,              0.0,                   0.0,                 0.0,                 -0.239,               0.0,                0.0,             0.036] # ttH is a _qqbar process
+theorySystAbsScale['tHq_hgg'] =     [0.0,                 0.0,                0.0,               0.065,              0.0,                   0.0,                 0.0,                 -0.149,               0.0,                0.0,             0.036] # ttH is a _qqbar process
+theorySystAbsScale['tHW_hgg'] =     [0.0,                 0.0,                0.0,               0.049,              0.0,                   0.0,                 0.0,                 -0.067,               0.0,                0.0,             0.036] # ttH is a _qqbar process
+theorySystAbsScale['ggH_hgg'] =     [0.039,               0.0,                0.0,               0.0,                -0.039,               0.0,                  0.0,                 0.0,                  0.0,                0.032,           0.0] # GGH is a _gg process
 
 ##############################################################################
 ## Calculate overall effect of theory systematics
@@ -406,7 +410,7 @@ def printTheorySysts():
         for c in options.cats:
           for p in options.procs:
             #with new WG1 prescription, specific other nuisances deal with ggH theory uncerts
-            if "bkg" in flashggProc[p] or "BBH" in flashggProc[p] or "THQ" in flashggProc[p] or "THW" in flashggProc[p] or ('scaleWeight' in systName and options.newGghScheme and 'ggH' in p):
+            if p in bkgProcs:
               outFile.write('- ')
               continue
             else:
@@ -792,13 +796,15 @@ flashggSysts['PreselSF']    =  'PreselSF'
 flashggSysts['SigmaEOverEShift'] = 'SigmaEOverEShift'
 flashggSysts['ElectronWeight'] = 'eff_e'
 flashggSysts['electronVetoSF'] = 'electronVetoSF'
-flashggSysts['MuonWeight'] = 'eff_m'
-flashggSysts['MuonMiniIsoWeight'] = 'eff_m_MiniIso'
+flashggSysts['MuonIDWeight'] = 'eff_m'
+flashggSysts['MuonIsoWeight'] = 'eff_m_MiniIso'
+#flashggSysts['MuonMiniIsoWeight'] = 'eff_m_MiniIso'
 flashggSysts['TriggerWeight'] = 'TriggerWeight'
 #flashggSysts['JetBTagWeight'] = 'eff_b'
 flashggSysts['JetBTagCutWeight'] = 'eff_b'
 #flashggSysts['MvaLinearSyst'] = 'MvaLinearSyst'
 #flashggSysts[''] =  ''
+#FIXME: should really only apply to MET categories
 flashggSysts['metPhoUncertainty'] = 'MET_PhotonScale'
 flashggSysts['metUncUncertainty'] = 'MET_Unclustered'
 flashggSysts['metJecUncertainty'] = 'MET_JEC'
@@ -818,7 +824,7 @@ if options.newGghScheme:
 
 #tth Tags
 tthSysts={}
-tthSysts['JEC'] = 'JEC_TTH'
+tthSysts['JEC'] = 'JEC_TTH' #FIXME: want both of these to apply to VH Hadronic too
 tthSysts['JER'] = 'JER_TTH'
 tthSysts['JetBTagReshapeWeight'] = 'BTagReshape_TTH'
 btagReshapeSyst = 1.042 #ad hoc from Saranya for Moriond17, combination of various sources
@@ -986,7 +992,8 @@ def printObsProcBinLines():
   for c in options.cats:
     for p in options.procs:
       if '%s:%s'%(p,c) in options.toSkip: continue
-      if p in bkgProcs:
+      #if p in bkgProcs:
+      if p == 'bkg_mass': #even if not doing systematics, eg bbH, still want to scale by lumi...
         outFile.write('1.0 ')
       else:
         scale=1.
@@ -1171,13 +1178,17 @@ def printFlashggSysts():
       if (not options.justThisSyst=="") :
           if (not options.justThisSyst==name): continue
       outFile.write('%-35s   lnN   '%(name))
+##
       for c in options.cats:
         for p in options.procs:
           if '%s:%s'%(p,c) in options.toSkip: continue
           #print "p,c is",p,c
+          #FIXME uncomment 2 lines #if ('THU_ggH' in flashggSyst and p=='ggH_hgg'):
+          #  outFile.write(getFlashggLine(p,c,flashggSyst))
           if p in bkgProcs or ('pdfWeight' in flashggSyst and (p!='ggH_hgg' and p!='qqH_hgg')) or ('THU_ggH' in flashggSyst and p!='ggH_hgg'):
             outFile.write('- ')
           else:
+            print p,c
             outFile.write(getFlashggLine(p,c,flashggSyst))
       outFile.write('\n')
   outFile.write('\n')
@@ -1435,6 +1446,8 @@ def printTTHSysts():
           if '%s:%s'%(p,c) in options.toSkip: continue
           if p in bkgProcs or ('pdfWeight' in tthSyst and (p!='ggH_hgg' and p!='qqH_hgg')):
             outFile.write('- ')
+          elif ('JEC' in tthSyst or 'JER' in tthSyst) and ('Hadronic' in c or 'Leptonic' in c) and 'ZH' not in c: #also want this to apply to VH Hadronic, WHLeptonic and VHLeptonicLoose
+            outFile.write(getFlashggLine(p,c,tthSyst))
           elif c not in tthCats:
             outFile.write('- ')
           elif 'Reshape' in tthSyst:
@@ -1497,7 +1510,7 @@ if (len(tthCats) > 0 ):  printTTHSysts()
 printTheorySysts()
 # lnN systematics
 printFlashggSysts()
-printUEPSSyst()
+#printUEPSSyst()
 #catgeory migrations
 #if (len(dijetCats) > 0 and len(tthCats)>0):  printVbfSysts()
 if (len(dijetCats) > 0 ):  printVbfSysts()

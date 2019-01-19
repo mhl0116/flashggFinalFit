@@ -753,7 +753,8 @@ vector<string> flashggCats_;
 		RooDataSet *dataFull;
 		RooDataSet *dataFull0;
 		if (isData_) {
-    dataFull = (RooDataSet*)inWS->data(Form("Data_13TeV_%s",catname.c_str()));
+		  //    dataFull = (RooDataSet*)inWS->data(Form("Data_13TeV_%s",catname.c_str()));
+    dataFull = (RooDataSet*)inWS->data(Form("test_13TeV_%s",catname.c_str()));
     /*dataFull= (RooDataSet*) dataFull0->emptyClone();
     for (int i =0 ; i < dataFull0->numEntries() ; i++){
     double m = dataFull0->get(i)->getRealValue("CMS_hgg_mass");

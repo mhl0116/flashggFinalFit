@@ -147,7 +147,7 @@ if opts.parallel:
 
 if not opts.files and opts.datacard:
     opts.files = getFilesFromDatacard(opts.datacard)
-
+print opts
 defaults = copy(opts)
 print "INFO - queue ", opts.queue
 def system(exec_line):
@@ -946,6 +946,7 @@ def run():
   checkValidMethod()
   # submit
   storecard = opts.datacard
+  print storecard
   if opts.postFit:
     opts.additionalOptions += " --snapshotName MultiDimFit"
     if opts.expected:
@@ -986,6 +987,7 @@ def run():
 def resetDefaultConfig():
     print "[INFO] resetting default config"
     global opts
+    
     opts = copy(defaults)
     ### for opt in specOpts.option_list:
     ###     opt_name = opt.dest.strip('--')
