@@ -25,6 +25,7 @@ class PdfModelBuilder {
     ~PdfModelBuilder();
 
     void setObsVar(RooRealVar *var);
+    void setObsVar(RooFormulaVar *var);
     void setSignalModifier(RooRealVar *var);
     void setSignalModifierVal(float val);
     void setSignalModifierConstant(bool val);
@@ -54,15 +55,18 @@ class PdfModelBuilder {
 
     void saveWorkspace(TFile* file);
     void saveWorkspace(string filename);
-
+    void printObsvar();
     RooAbsPdf* getBernstein(string prefix, int order);
     RooAbsPdf* getChebychev(string prefix, int order);
     RooAbsPdf* getPowerLaw(string prefix, int order);
     RooAbsPdf* getPowerLawSingle(string prefix, int order);
+    RooAbsPdf* getPowerLawSingle(string prefix1, string prefix2, int order);
     RooAbsPdf* getPowerLawGeneric(string prefix, int order);
     RooAbsPdf* getExponential(string prefix, int order);
     RooAbsPdf* getExponentialSingle(string prefix, int order);
+    RooAbsPdf* getExponentialSingle(string prefix1, string prefix2, int order);
     RooAbsPdf* getLaurentSeries(string prefix, int order);
+    RooAbsPdf* getLaurentSeries(string prefix1, string prefix2, int order);
     RooAbsPdf* getKeysPdf(string prefix);
     RooAbsPdf* getPdfFromFile(string &prefix);
 
@@ -89,6 +93,7 @@ class PdfModelBuilder {
     map<string,RooAbsPdf*> utilities;
 
     RooRealVar *obs_var;
+    RooFormulaVar *obs_formulavar;
     bool obs_var_set;
     RooRealVar *signalModifier;
     bool signal_modifier_set;
