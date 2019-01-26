@@ -297,15 +297,15 @@ RooAbsPdf* PdfModelBuilder::getPowerLawSingle(string prefix1, string prefix2, in
     RooArgList *pows = new RooArgList();
     for (int i=1; i<=nfracs; i++){
       string name =  Form("%s_f%d",prefix2.c_str(),i);
-      params.insert(pair<string,RooRealVar*>(name, new RooRealVar(name.c_str(),name.c_str(),0.9-float(i-1)*1./nfracs,0.,1.)));
-      //params[name]->removeRange();
+      params.insert(pair<string,RooRealVar*>(name, new RooRealVar(name.c_str(),name.c_str(), 0.9, 0., 1.)));
+      //      params[name]->removeRange();
       fracs->add(*params[name]);
     }
     for (int i=1; i<=npows; i++){
       string name =  Form("%s_p%d",prefix2.c_str(),i);
-      string ename =  Form("%s_e%d",prefix2.c_str(),i);
-      params.insert(pair<string,RooRealVar*>(name, new RooRealVar(name.c_str(),name.c_str(),TMath::Max(-9.,-1.*(i+1)),-9.,1.)));
-      //params[name]->removeRange();
+      string ename =  Form("%s_e%d",prefix1.c_str(),i);
+      params.insert(pair<string,RooRealVar*>(name, new RooRealVar(name.c_str(),name.c_str(),-2.9,-9.,1.)));
+      //      params[name]->removeRange();
       //utilities.insert(pair<string,RooAbsPdf*>(ename, new RooPower(ename.c_str(),ename.c_str(),*obs_formulavar,*params[name])));
       if (obs_formulavar_set) utilities.insert(pair<string,RooAbsPdf*>(ename, new RooPower(ename.c_str(),ename.c_str(),*obs_formulavar,*params[name])));
       if (obs_var_set) utilities.insert(pair<string,RooAbsPdf*>(ename, new RooPower(ename.c_str(),ename.c_str(),*obs_var,*params[name])));
@@ -315,8 +315,31 @@ RooAbsPdf* PdfModelBuilder::getPowerLawSingle(string prefix1, string prefix2, in
     //fracs->Print("v");
     //pows->Print("v");
     //cout << "Function..." << endl;
-    RooAbsPdf *pow = new RooAddPdf(prefix1.c_str(),prefix1.c_str(),*pows,*fracs,true); 
+    //RooAbsPdf *pow = new RooAddPdf(prefix1.c_str(),prefix1.c_str(),*pows,*fracs,true); 
     //pow->Print("v");
+    
+    RooAbsPdf *pow;
+    vector<RooAbsPdf*> tmpPdfs;
+    for (int i = 1; i <= npows; i++) {
+      if (i==1) {
+	RooRealVar* tau = new RooRealVar(prefix2.c_str(),prefix2.c_str(),-4,-9.,1.);
+	RooPower* pow_ = new RooPower(Form("%s_pow1",prefix1.c_str()),"",*obs_formulavar,*tau);
+	tmpPdfs.push_back(pow_);
+
+      }
+      else {
+	
+	RooAddPdf* tmpAddPdf;
+	if (i < npows) tmpAddPdf = new RooAddPdf(Form("tmpAddPow_%d",npows-i+1), "", *(tmpPdfs.back()), *(utilities[Form("%s_e%d", prefix1.c_str(), i)]), *(params[Form("%s_f%d",prefix2.c_str(), i-1)]) );
+	if (i == npows) tmpAddPdf = new RooAddPdf(prefix1.c_str(), "", *(tmpPdfs.back()), *(utilities[Form("%s_e%d", prefix1.c_str(), i)]), *(params[Form("%s_f%d",prefix2.c_str(), i-1)]) );
+	tmpPdfs.push_back(tmpAddPdf);
+
+      }
+
+    }
+
+    pow = tmpPdfs.back();
+    
     return pow;
     //bkgPdfs.insert(pair<string,RooAbsPdf*>(pow->GetName(),pow));
   }
@@ -467,10 +490,7 @@ RooAbsPdf* PdfModelBuilder::getExponentialSingle(string prefix, int order){
       if (obs_var_set) utilities.insert(pair<string,RooAbsPdf*>(ename, new RooExponential(ename.c_str(),ename.c_str(),*obs_var,*params[name])));
       exps->add(*utilities[ename]);
     }
-    //fracs->Print("v");
-    //exps->Print("v");
     RooAbsPdf *exp = new RooAddPdf(prefix.c_str(),prefix.c_str(),*exps,*fracs,true);
-    //exp->Print("v");
     cout << "--------------------------" << endl;
     return exp;
     //bkgPdfs.insert(pair<string,RooAbsPdf*>(exp->GetName(),exp));
@@ -501,24 +521,51 @@ RooAbsPdf* PdfModelBuilder::getExponentialSingle(string prefix1, string prefix2,
       params.insert(pair<string,RooRealVar*>(name, new RooRealVar(name.c_str(),name.c_str(),TMath::Max(-1.,-0.04*(i+1)),-1.,0.)));
 
       //utilities.insert(pair<string,RooAbsPdf*>(ename, new RooExponential(ename.c_str(),ename.c_str(),*obs_formulavar,*params[name])));
+      //RooExponential* tmpExp = new RooExponential(ename.c_str(),ename.c_str(),*obs_formulavar,*params[name]);
+      //if (obs_formulavar_set) utilities.insert(pair<string,RooAbsPdf*>(ename, tmpExp));
       if (obs_formulavar_set) utilities.insert(pair<string,RooAbsPdf*>(ename, new RooExponential(ename.c_str(),ename.c_str(),*obs_formulavar,*params[name])));
       if (obs_var_set) utilities.insert(pair<string,RooAbsPdf*>(ename, new RooExponential(ename.c_str(),ename.c_str(),*obs_var,*params[name])));
       exps->add(*utilities[ename]);
     }
-    //fracs->Print("v");
-    //exps->Print("v");
+
     RooAbsPdf *exp;
-    if (order > -1) exp = new RooAddPdf(prefix1.c_str(),prefix1.c_str(),*exps,*fracs,true);
-    RooRealVar* tau = new RooRealVar(prefix2.c_str(),prefix2.c_str(),-0.02,-1.,0.);
-    tau->Print();
-    if (order == -1 && obs_formulavar_set) exp = new RooExponential(prefix1.c_str(),prefix1.c_str(),*obs_formulavar,*tau);
-    if (order == -1 && obs_var_set) exp = new RooExponential(prefix1.c_str(),prefix1.c_str(),*obs_var,*tau);
+
+    
+    vector<RooAbsPdf*> tmpPdfs;
+    for (int i = 1; i <= nexps; i++) {
+      if (i==1) {
+	RooRealVar* tau = new RooRealVar(prefix2.c_str(),prefix2.c_str(),-0.0224,-1.,0.);
+	RooExponential* exp_ = new RooExponential(Form("%s_e1",prefix1.c_str()), "",*obs_formulavar,*tau);
+	tmpPdfs.push_back(exp_);
+	//	tmpPdfs.push_back(utilities[Form("%s_e%d",prefix1.c_str(),i)]);
+
+	cout << "----===----" << endl;
+	exp_->Print("v");
+	utilities[Form("%s_e%d",prefix1.c_str(),i)]->Print("v");
+	cout << "----===----" << endl;
+
+      }
+      else {
+	
+	RooAddPdf* tmpAddPdf;
+	if (i < nexps) tmpAddPdf = new RooAddPdf(Form("tmpAddPdf_%d",nexps-i+1), "", *(tmpPdfs.back()), *(utilities[Form("%s_e%d", prefix1.c_str(), i)]), *(params[Form("%s_f%d",prefix2.c_str(), i-1)]) );
+	if (i==nexps) tmpAddPdf = new RooAddPdf(prefix1.c_str(), "", *(tmpPdfs.back()), *(utilities[Form("%s_e%d", prefix1.c_str(), i)]), *(params[Form("%s_f%d",prefix2.c_str(), i-1)]) );
+	tmpPdfs.push_back(tmpAddPdf);
+
+      }
+
+    }
+
+    exp = tmpPdfs.back();
+
     cout << "--------------------------" << endl;
+    //exp->Print("v");
     return exp;
     //bkgPdfs.insert(pair<string,RooAbsPdf*>(exp->GetName(),exp));
 
   }
 }
+
 
 
 void PdfModelBuilder::addBkgPdf(string type, int nParams, string name, bool cache){
