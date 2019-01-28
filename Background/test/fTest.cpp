@@ -571,7 +571,7 @@ void plot(RooRealVar *mass, RooSimultaneous *pdf, RooDataSet *data, string name,
   testPlot->SetMinimum(0.0001);
   testPlot->Draw();
 
-  */
+  
   RooWorkspace w("w");
   RooAbsPdf* testpdf = pdf->getPdf(Form("%s_tag%d",tag.c_str(),3));
   RooArgSet* model_params = pdf->getParameters(datasets[3]) ;
@@ -583,7 +583,7 @@ void plot(RooRealVar *mass, RooSimultaneous *pdf, RooDataSet *data, string name,
   cout << "test" << endl;
   w.Print("w");
   w.var("ftest_pdf_tag_exp1")->Print();
-  
+  */
 
   canv->SaveAs(Form("%s.png",name.c_str()));
   canv->SaveAs(Form("%s.pdf",name.c_str()));
@@ -936,35 +936,26 @@ int getBestFitFunction(RooMultiPdf *bkg, RooDataSet *data, RooCategory *cat, boo
 	return best_index;
 }
 
-void DoRooSimultaneousFit(RooRealVar* mass, vector<RooDataSet> datasets, float b_, vector<float> betas, string tag, vector<string> functionClasses, int startingCategory, string outDir, FILE* resFile){
+void DoRooSimultaneousFit(RooRealVar* mass, vector<RooDataSet> datasets, float b_, vector<float> betas, string tag, vector<string> functionClasses, int startingCategory, string outDir, FILE* resFile, RooWorkspace& w_){
 
-  /*
-    RooArgList storedPdfs("store");
-
-    fprintf(resFile,"\\multicolumn{4}{|c|}{\\textbf{Category %d}} \\\\\n",cat);
-    fprintf(resFile,"\\hline\n");
-    
-    
-   */
-
-  // datas contains n categories for lep/had
-
-  map<string,RooAbsPdf*> testPdfs;
+  map<string, RooWorkspace*> savedModels;
 
   double MinimimNLLSoFar=1e10;
   int simplebestFitPdfIndex = 0;
-
-  map<string,int> choices;
-  map<string,std::vector<int> > choices_envelope;
-  //  map<string,RooAbsPdf*> pdfs;
-		map<string,RooSimultaneous*> pdfs;
-  map<string,RooAbsPdf*> allPdfs;
-
-
-  RooArgList storedPdfs("store");
-
   bool saveMultiPdf = true;
 
+  // save outputs, fitted model
+  map<string,int> choices;
+  //  map<string,RooAbsPdf*> pdfs;
+  map<string,RooSimultaneous*> pdfs;
+
+  map<string,std::vector<int> > choices_envelope;
+  map<string,RooAbsPdf*> allPdfs;
+  map<string,RooWorkspace*> allWSs;
+  RooArgList storedPdfs("store"); 
+
+  // inputs for fitting
+  vector<PdfModelBuilder> pdfsModels;
   RooCategory datas("datas", "datas"); 
   const int nCats = int(datasets.size());
   RooDataSet* combData;
@@ -975,8 +966,6 @@ void DoRooSimultaneousFit(RooRealVar* mass, vector<RooDataSet> datasets, float b
   w.factory(Form("b[%f]",b_) );
   w.var("b")->setConstant();
 
-  vector<PdfModelBuilder> pdfsModels;
-
   // build roosimu pdf and common dataset for simultaneousfit
   for (int i = 0; i < nCats; i++) {
     datas.defineType(Form("%s_tag%d",tag.c_str(),i)) ;
@@ -984,9 +973,10 @@ void DoRooSimultaneousFit(RooRealVar* mass, vector<RooDataSet> datasets, float b
 
     w.factory(Form("beta%d[%f]",i,betas[i]) );
     w.var(Form("beta%d",i))->setConstant();
-
     w.factory(Form("expr::x%d(\"@0-@1*@2\",{%s,b,beta%d})", i, mass->GetName(), i) );
+
     RooFormulaVar*  tmpVar = new RooFormulaVar(Form("x%d",i),"@0-@1*@2",RooArgList(*mass,*w.var("b"),*w.var(Form("beta%d",i)) ) );
+
     PdfModelBuilder pdfsModel_tmp;
     pdfsModel_tmp.setObsVar( tmpVar );
     //pdfsModel_tmp.setObsVar( mass );
@@ -994,7 +984,7 @@ void DoRooSimultaneousFit(RooRealVar* mass, vector<RooDataSet> datasets, float b
 
   }
 
-    combData = new RooDataSet(Form("combData_%s", tag.c_str()), Form("combined data_%s", tag.c_str()), RooArgSet(*mass), Index(datas), Import(dmap) );
+  combData = new RooDataSet(Form("combData_%s", tag.c_str()), Form("combined data_%s", tag.c_str()), RooArgSet(*mass), Index(datas), Import(dmap) );
   //combData = new RooDataSet(Form("combData_%s", tag.c_str()),"",RooArgSet(*mass), Index(datas), Import("test_tag0", datasets[0]), Import("test_tag1", datasets[1]), Import("test_tag2", datasets[2])), Import("test_tag3", datasets[3]) );
 
   // loop over all function type
@@ -1016,15 +1006,9 @@ void DoRooSimultaneousFit(RooRealVar* mass, vector<RooDataSet> datasets, float b
       bool goNextOrder = false;
 
       for (int cat=startingCategory; cat<nCats; cat++){
-      //pdfsModels[0].printObsvar() ;
+  	
 	RooAbsPdf *tmpPdf = getPdf(pdfsModels[cat],*funcType,order,Form("ftest_pdf_tag%d", cat), "ftest_pdf_tag");
-
 	if (!tmpPdf) {goNextOrder = true; break; }
-
-	//cout << tmpPdf->GetName() << endl;
-	testPdfs.insert(pair<string,RooAbsPdf*>(tmpPdf->GetName(), tmpPdf));
-	//RooAbsPdf *tmpPdf = getPdf(pdfsModels[cat],*funcType,order,Form("ftest_pdf_tag%d", cat), Form("ftest_pdf_tag%d", cat));
-
 	simPdf->addPdf(*tmpPdf, Form("%s_tag%d",tag.c_str(),cat));
       }
 
@@ -1077,7 +1061,8 @@ void DoRooSimultaneousFit(RooRealVar* mass, vector<RooDataSet> datasets, float b
     //cache_pdf->Print("v");
 
     int truthOrder = cache_order;
-    
+
+    /*    
     TCanvas* c = new TCanvas("c","",800,800);
     c->cd();
     mass->setRange("unblindReg_1",100,115);
@@ -1103,13 +1088,6 @@ void DoRooSimultaneousFit(RooRealVar* mass, vector<RooDataSet> datasets, float b
     testPlot->Draw();
     c->SaveAs("/home/users/hmei/public_html/2019/20190124_bkgModel/test.png");
     c->SaveAs("/home/users/hmei/public_html/2019/20190124_bkgModel/test.pdf");
-    /*
-      cout << choices.size() << endl;
-      cout << choices["Exponential"] << endl;
-      cout << choices["PowerLaw"] << endl;
-      cout << choices["Laurent"] << endl;
-      cout << pdfs.size() << endl;
-  fprintf(resFile,"%15s & %d & %5.2f & %5.2f \\\\\n",funcType->c_str(),cache_order+1,chi2,prob);
     */
 
     double upperEnvThreshold = 0.1;    
@@ -1210,6 +1188,20 @@ void DoRooSimultaneousFit(RooRealVar* mass, vector<RooDataSet> datasets, float b
 
   //plot(mass,pdfs,data,Form("%s/truths_cat%d",outDir.c_str(),cat),flashggCats_,cat);
 
+  
+
+  //RooWorkspace w_("w_");
+  w_.import(*mass);
+  for (int i = 0; i < nCats; i++) w_.import(datasets[i]);
+
+  for (vector<string>::iterator funcType=functionClasses.begin(); funcType!=functionClasses.end(); funcType++){
+    cout << "here" << endl; cout << allPdfs.size() << endl;
+    cout << funcType->c_str() << endl;
+    w_.import(*(allPdfs[Form("%s1",funcType->c_str())]) , RecycleConflictNodes());
+      
+  }
+  
+  w_.Print();
 }
 
 int main(int argc, char* argv[]){
@@ -1382,28 +1374,28 @@ vector<string> flashggCats_;
 		if (isData_) {
 		  //    dataFull = (RooDataSet*)inWS->data(Form("Data_13TeV_%s",catname.c_str()));
 
-    dataFull = (RooDataSet*)inWS->data(Form("test_13TeV_%s",catname.c_str()));
+		  dataFull = (RooDataSet*)inWS->data(Form("test_13TeV_%s",catname.c_str()));
 
 
-    /*dataFull= (RooDataSet*) dataFull0->emptyClone();
-    for (int i =0 ; i < dataFull0->numEntries() ; i++){
-    double m = dataFull0->get(i)->getRealValue("CMS_hgg_mass");
-    //if (m <(mgg_low+0.01) or m > (mgg_high-0.01)) 
-
-    if (m==mgg_low){
-    std::cout << "dataset mass m="<< m << std::endl;
-    continue;
-    }
-    dataFull->add(*dataFull0->get(),1.0);
-    }*/
-		if (verbose) std::cout << "[INFO] opened data for  "  << Form("Data_%s",catname.c_str()) <<" - " << dataFull <<std::endl;
-    }
+		  /*dataFull= (RooDataSet*) dataFull0->emptyClone();
+		    for (int i =0 ; i < dataFull0->numEntries() ; i++){
+		    double m = dataFull0->get(i)->getRealValue("CMS_hgg_mass");
+		    //if (m <(mgg_low+0.01) or m > (mgg_high-0.01)) 
+		    
+		    if (m==mgg_low){
+		    std::cout << "dataset mass m="<< m << std::endl;
+		    continue;
+		    }
+		    dataFull->add(*dataFull0->get(),1.0);
+		    }*/
+		  if (verbose) std::cout << "[INFO] opened data for  "  << Form("Data_%s",catname.c_str()) <<" - " << dataFull <<std::endl;
+		}
 		else {
 		  dataFull = (RooDataSet*)inWS->data(Form("data_mass_%s",catname.c_str()));
 		  if (verbose) std::cout << "[INFO] opened data for  "  << Form("data_mass_%s",catname.c_str()) <<" - " << dataFull <<std::endl;
 		}
-
-
+		
+		
 		mass->setBins(nBinsForMass);
 		RooDataSet *data;
 		//	RooDataHist thisdataBinned(Form("roohist_data_mass_cat%d",cat),"data",*mass,*dataFull);
@@ -1424,27 +1416,23 @@ vector<string> flashggCats_;
 
 		// here is good
 		/*
-  cout << "here0" << endl;
-  cout << thisdataBinned_name.c_str() << endl;
-		RooDataHist thisdataBinned(thisdataBinned_name.c_str(),"data",*mass,*dataFull);
-		cout << "here" << endl; 
-		data = (RooDataSet*)&thisdataBinned;
-
-  cout << "here1" << endl;
+		  cout << thisdataBinned_name.c_str() << endl;
+		  RooDataHist thisdataBinned(thisdataBinned_name.c_str(),"data",*mass,*dataFull);
+		  data = (RooDataSet*)&thisdataBinned;
 		*/
 		RooDataSet* dataCut = new RooDataSet("dataCut", "", dataFull, RooArgSet(*mass), "(CMS_hgg_mass < 180 && CMS_hgg_mass > 135) || (CMS_hgg_mass > 100 && CMS_hgg_mass < 115)");
 		cout << "dataCut: " << dataCut->sumEntries() << endl;
-		
-
-		//		if (catname.find("TTHHadronic") != std::string::npos) hadronicData.push_back(*dataCut);
+			
+		//if (catname.find("TTHHadronic") != std::string::npos) hadronicData.push_back(*dataCut);
 		//if (catname.find("TTHLeptonic") != std::string::npos) leptonicData.push_back(*dataCut);
 		if (catname.find("TTHHadronic") != std::string::npos) hadronicData.push_back(*dataFull);
 		if (catname.find("TTHLeptonic") != std::string::npos) leptonicData.push_back(*dataFull);
-
+		
+		/*
 		RooArgList storedPdfs("store");
-
 		fprintf(resFile,"\\multicolumn{4}{|c|}{\\textbf{Category %d}} \\\\\n",cat);
 		fprintf(resFile,"\\hline\n");
+		*/
 
 		double MinimimNLLSoFar=1e10;
 		int simplebestFitPdfIndex = 0;
@@ -1453,175 +1441,102 @@ vector<string> flashggCats_;
 
 
 	vector<float> betas;
-	/*
-	betas.push_back(0.28);
-	betas.push_back(0.42);
-	betas.push_back(0.51);
-	betas.push_back(0.64);
-	*/
 	betas.push_back(0.64);
 	betas.push_back(0.51);
 	betas.push_back(0.42);
 	betas.push_back(0.28);
-	//	betas.push_back(1);
 
-	string tag = "test";
-
-	DoRooSimultaneousFit(mass, hadronicData, -4.2, betas, tag, functionClasses, startingCategory, outDir, resFile);
-	//DoRooSimultaneousFit(mass, hadronicData, 3.6, betas, tag, functionClasses, startingCategory, outDir);
-
+	string tag = "TTHHadronicTag";
+	RooWorkspace w_had("w_had");
+	DoRooSimultaneousFit(mass, hadronicData, -4.2, betas, tag, functionClasses, startingCategory, outDir, resFile, w_had);
 	betas.clear();
-	/*
-				    
-	  fprintf(resFile,"%15s & %d & %5.2f & %5.2f \\\\\n",funcType->c_str(),cache_order+1,chi2,prob);
-	  choices.insert(pair<string,int>(*funcType,cache_order));
-	  pdfs.insert(pair<string,RooAbsPdf*>(Form("%s%d",funcType->c_str(),cache_order),cache_pdf));
 
-	  int truthOrder = cache_order;
+	w_had.Print();
 
-	  // Now run loop to determine functions inside envelope
+	// there should be a loop over all categories here, can save all pdfs, data in some workspace first
+
+	for (int cat=startingCategory; cat<ncats; cat++){
 	  if (saveMultiPdf){
-	  chi2=0.;
-	  thisNll=0.;
-	  prevNll=0.;
-	  prob=0.;
-	  order=1;
-	  prev_order=0;
-	  cache_order=0;
-	  std::cout << "[INFO] Determining Envelope Functions for Family " << *funcType << ", cat " << cat << std::endl;
-	  std::cout << "[INFO] Upper end Threshold for highest order function " << upperEnvThreshold <<std::endl;
-				
-	  while (prob<upperEnvThreshold){
-	  RooAbsPdf *bkgPdf = getPdf(pdfsModel,*funcType,order,Form("env_pdf_%d_%s",cat,ext.c_str()));
-	  if (!bkgPdf ){
-	  // assume this order is not allowed
-	  if (order >6) { std::cout << " [WARNING] could not add ] " << std::endl; break ;}
-	  order++;
+	    
+	    // Put selectedModels into a MultiPdf
+	    string catindexname;
+	    string catname;
+	    if (isFlashgg_){
+	      catindexname = Form("pdfindex_%s_%s",flashggCats_[cat].c_str(),ext.c_str());
+	      catname = Form("%s",flashggCats_[cat].c_str());
+	    } else {
+	      catindexname = Form("pdfindex_%d_%s",cat,ext.c_str());
+	      catname = Form("cat%d",cat);
+	    }
+	    
+	    RooCategory catIndex(catindexname.c_str(),"c");
+
+
+	    RooArgList storedPdfs("store");                                                                                                                                                                
+	    storedPdfs.add(*(w_had.pdf(Form("ftest_pdf_tag%d_exp1_e1",cat))));
+	    storedPdfs.add(*(w_had.pdf(Form("ftest_pdf_tag%d_lau1",cat))));
+	    storedPdfs.add(*(w_had.pdf(Form("ftest_pdf_tag%d_pow1_pow1",cat))));
+
+	    RooMultiPdf *pdf = new RooMultiPdf(Form("CMS_hgg_%s_%s_bkgshape",catname.c_str(),ext.c_str()),"all pdfs",catIndex,storedPdfs);
+
+	    //RooRealVar nBackground(Form("CMS_hgg_%s_%s_bkgshape_norm",catname.c_str(),ext.c_str()),"nbkg",data->sumEntries(),0,10E8);
+	    int nData = w_had.data(Form("test_13TeV_TTHHadronicTag_%d",cat))->sumEntries();
+	    RooRealVar nBackground(Form("CMS_hgg_%s_%s_bkgshape_norm",catname.c_str(),ext.c_str()),"nbkg",nData,0,3*nData);
+
+	    //nBackground.removeRange(); // bug in roofit will break combine until dev branch brought in
+	    //double check the best pdf!
+	    int bestFitPdfIndex = getBestFitFunction(pdf,&(hadronicData[cat]),&catIndex,!verbose);
+
+	    cout << bestFitPdfIndex << endl;
+	    /*
+	    catIndex.setIndex(bestFitPdfIndex);
+	    std::cout << "// ------------------------------------------------------------------------- //" <<std::endl; 
+	    std::cout << "[INFO] Created MultiPdf " << pdf->GetName() << ", in Category " << cat << " with a total of " << catIndex.numTypes() << " pdfs"<< std::endl;
+	    storedPdfs.Print();
+	    std::cout << "[INFO] Best Fit Pdf = " << bestFitPdfIndex << ", " << storedPdfs.at(bestFitPdfIndex)->GetName() << std::endl;
+	    std::cout << "// ------------------------------------------------------------------------- //" <<std::endl;
+	    std::cout << "[INFO] Simple check of index "<< simplebestFitPdfIndex <<std::endl;
+	  
+	    mass->setBins(nBinsForMass);
+	    RooDataHist dataBinned(Form("roohist_data_mass_%s",catname.c_str()),"data",*mass,*dataFull);
+	    
+	    // Save it (also a binned version of the dataset
+	    outputws->import(*pdf);
+	    outputws->import(nBackground);
+	    outputws->import(catIndex);
+	    outputws->import(dataBinned);
+	    outputws->import(*data);
+	    plot(mass,pdf,&catIndex,data,Form("%s/multipdf_%s",outDir.c_str(),catname.c_str()),flashggCats_,cat,bestFitPdfIndex);
+	    */
 	  }
-	  else {
-	  //RooFitResult *fitRes;
-	  int fitStatus=0;
-	  runFit(bkgPdf,data,&thisNll,&fitStatus,3);//bkgPdf->fitTo(*data,Save(true),RooFit::Minimizer("Minuit2","minimize"));
-	  //thisNll = fitRes->minNll();
-	  if (fitStatus!=0) std::cout << "[WARNING] Warning -- Fit status for " << bkgPdf->GetName() << " at " << fitStatus <<std::endl;
-	  double myNll = 2.*thisNll;
-	  chi2 = 2.*(prevNll-thisNll);
-	  if (chi2<0. && order>1) chi2=0.;
-	  prob = TMath::Prob(chi2,order-prev_order);
-	  
-	  cout << "[INFO] \t " << *funcType << " " << order << " " << prevNll << " " << thisNll << " " << chi2 << " " << prob << endl;
-	  prevNll=thisNll;
-	  cache_order=prev_order;
-	  cache_pdf=prev_pdf;
-	  
-	  // Calculate goodness of fit for the thing to be included (will use toys for lowstats)!
-	  double gofProb =0; 
-	  plot(mass,bkgPdf,data4,Form("%s/%s%d_cat%d.pdf",outDir.c_str(),funcType->c_str(),order,cat),flashggCats_,fitStatus,&gofProb);
-	  
-	  if ((prob < upperEnvThreshold) ) { // Looser requirements for the envelope
-	  
-	  if (gofProb > 0.01 || order == truthOrder ) {  // Good looking fit or one of our regular truth functions
-	  
-	  std::cout << "[INFO] Adding to Envelope " << bkgPdf->GetName() << " "<< gofProb 
-	  << " 2xNLL + c is " << myNll + bkgPdf->getVariables()->getSize() <<  std::endl;
-	  allPdfs.insert(pair<string,RooAbsPdf*>(Form("%s%d",funcType->c_str(),order),bkgPdf));
-	  storedPdfs.add(*bkgPdf);
-	  pdforders.push_back(order);
-	  
-	  // Keep track but we shall redo this later
-	  if ((myNll + bkgPdf->getVariables()->getSize()) < MinimimNLLSoFar) {
-	  simplebestFitPdfIndex = storedPdfs.getSize()-1;
-	  MinimimNLLSoFar = myNll + bkgPdf->getVariables()->getSize();
-	  }
-	  }
-	  }
-	  
-	  prev_order=order;
-	  prev_pdf=bkgPdf;
-	  order++;
-	  }
-	  }
-	  
-	  fprintf(resFile,"%15s & %d & %5.2f & %5.2f \\\\\n",funcType->c_str(),cache_order+1,chi2,prob);
-	  choices_envelope.insert(pair<string,std::vector<int> >(*funcType,pdforders));
-	  }
-	  }
-	  
-	  fprintf(resFile,"\\hline\n");
-	  choices_vec.push_back(choices);
-	  choices_envelope_vec.push_back(choices_envelope);
-	  pdfs_vec.push_back(pdfs);
-	  
-	  plot(mass,pdfs,data,Form("%s/truths_cat%d",outDir.c_str(),cat),flashggCats_,cat);
-	  
+	}
+	/*  		
 	  if (saveMultiPdf){
-	  
-	  
-	  // Put selectedModels into a MultiPdf
-	  string catindexname;
-	  string catname;
-	  if (isFlashgg_){
-	  catindexname = Form("pdfindex_%s_%s",flashggCats_[cat].c_str(),ext.c_str());
-	  catname = Form("%s",flashggCats_[cat].c_str());
-	  } else {
-	  catindexname = Form("pdfindex_%d_%s",cat,ext.c_str());
-	  catname = Form("cat%d",cat);
-	  }
-	  RooCategory catIndex(catindexname.c_str(),"c");
-	  RooMultiPdf *pdf = new RooMultiPdf(Form("CMS_hgg_%s_%s_bkgshape",catname.c_str(),ext.c_str()),"all pdfs",catIndex,storedPdfs);
-	  //RooRealVar nBackground(Form("CMS_hgg_%s_%s_bkgshape_norm",catname.c_str(),ext.c_str()),"nbkg",data->sumEntries(),0,10E8);
-	  RooRealVar nBackground(Form("CMS_hgg_%s_%s_bkgshape_norm",catname.c_str(),ext.c_str()),"nbkg",data->sumEntries(),0,3*data->sumEntries());
-	  //nBackground.removeRange(); // bug in roofit will break combine until dev branch brought in
-	  //double check the best pdf!
-	  int bestFitPdfIndex = getBestFitFunction(pdf,data,&catIndex,!verbose);
-	  catIndex.setIndex(bestFitPdfIndex);
-	  std::cout << "// ------------------------------------------------------------------------- //" <<std::endl; 
-	  std::cout << "[INFO] Created MultiPdf " << pdf->GetName() << ", in Category " << cat << " with a total of " << catIndex.numTypes() << " pdfs"<< std::endl;
-	  storedPdfs.Print();
-	  std::cout << "[INFO] Best Fit Pdf = " << bestFitPdfIndex << ", " << storedPdfs.at(bestFitPdfIndex)->GetName() << std::endl;
-	  std::cout << "// ------------------------------------------------------------------------- //" <<std::endl;
-	  std::cout << "[INFO] Simple check of index "<< simplebestFitPdfIndex <<std::endl;
-	  
-	  mass->setBins(nBinsForMass);
-	  RooDataHist dataBinned(Form("roohist_data_mass_%s",catname.c_str()),"data",*mass,*dataFull);
-	  
-	  // Save it (also a binned version of the dataset
-	  outputws->import(*pdf);
-	  outputws->import(nBackground);
-	  outputws->import(catIndex);
-	  outputws->import(dataBinned);
-	  outputws->import(*data);
-	  plot(mass,pdf,&catIndex,data,Form("%s/multipdf_%s",outDir.c_str(),catname.c_str()),flashggCats_,cat,bestFitPdfIndex);
-	  
+	    outputfile->cd();
+	    outputws->Write();
+	    outputfile->Close();	
 	  }
 
-		
-		if (saveMultiPdf){
-			outputfile->cd();
-			outputws->Write();
-			outputfile->Close();	
-		}
+	  FILE *dfile = fopen(datfile.c_str(),"w");
+	  cout << "[RESULT] Recommended options" << endl;
 
-		FILE *dfile = fopen(datfile.c_str(),"w");
-		cout << "[RESULT] Recommended options" << endl;
-
-		for (int cat=startingCategory; cat<ncats; cat++){
-			cout << "Cat " << cat << endl;
-			fprintf(dfile,"cat=%d\n",cat); 
-			for (map<string,int>::iterator it=choices_vec[cat-startingCategory].begin(); it!=choices_vec[cat-startingCategory].end(); it++){
-				cout << "\t" << it->first << " - " << it->second << endl;
-				fprintf(dfile,"truth=%s:%d:%s%d\n",it->first.c_str(),it->second,namingMap[it->first].c_str(),it->second);
-			}
-			for (map<string,std::vector<int> >::iterator it=choices_envelope_vec[cat-startingCategory].begin(); it!=choices_envelope_vec[cat-startingCategory].end(); it++){
-				std::vector<int> ords = it->second;
-				for (std::vector<int>::iterator ordit=ords.begin(); ordit!=ords.end(); ordit++){
-					fprintf(dfile,"paul=%s:%d:%s%d\n",it->first.c_str(),*ordit,namingMap[it->first].c_str(),*ordit);
-				}
-			}
-			fprintf(dfile,"\n");
-		}
-		inFile->Close();
-	*/
-		return 0;
+	  for (int cat=startingCategory; cat<ncats; cat++){
+	    cout << "Cat " << cat << endl;
+	    fprintf(dfile,"cat=%d\n",cat); 
+	    for (map<string,int>::iterator it=choices_vec[cat-startingCategory].begin(); it!=choices_vec[cat-startingCategory].end(); it++){
+	      cout << "\t" << it->first << " - " << it->second << endl;
+	      fprintf(dfile,"truth=%s:%d:%s%d\n",it->first.c_str(),it->second,namingMap[it->first].c_str(),it->second);
+	    }
+	    for (map<string,std::vector<int> >::iterator it=choices_envelope_vec[cat-startingCategory].begin(); it!=choices_envelope_vec[cat-startingCategory].end(); it++){
+	      std::vector<int> ords = it->second;
+	      for (std::vector<int>::iterator ordit=ords.begin(); ordit!=ords.end(); ordit++){
+		fprintf(dfile,"paul=%s:%d:%s%d\n",it->first.c_str(),*ordit,namingMap[it->first].c_str(),*ordit);
+	      }
+	    }
+	    fprintf(dfile,"\n");
+	  }
+	  inFile->Close();
+	*/	
+	  return 0;
 }
 		
