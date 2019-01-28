@@ -1201,7 +1201,7 @@ void DoRooSimultaneousFit(RooRealVar* mass, vector<RooDataSet> datasets, float b
       
   }
   
-  w_.Print();
+  //w_.Print();
 }
 
 int main(int argc, char* argv[]){
@@ -1451,10 +1451,12 @@ vector<string> flashggCats_;
 	DoRooSimultaneousFit(mass, hadronicData, -4.2, betas, tag, functionClasses, startingCategory, outDir, resFile, w_had);
 	betas.clear();
 
-	w_had.Print();
+	//w_had.Print();
 
 	// there should be a loop over all categories here, can save all pdfs, data in some workspace first
 
+	outputws->Print();
+	
 	for (int cat=startingCategory; cat<ncats; cat++){
 	  if (saveMultiPdf){
 	    
@@ -1488,26 +1490,35 @@ vector<string> flashggCats_;
 	    int bestFitPdfIndex = getBestFitFunction(pdf,&(hadronicData[cat]),&catIndex,!verbose);
 
 	    cout << bestFitPdfIndex << endl;
-	    /*
+	    
 	    catIndex.setIndex(bestFitPdfIndex);
 	    std::cout << "// ------------------------------------------------------------------------- //" <<std::endl; 
 	    std::cout << "[INFO] Created MultiPdf " << pdf->GetName() << ", in Category " << cat << " with a total of " << catIndex.numTypes() << " pdfs"<< std::endl;
 	    storedPdfs.Print();
 	    std::cout << "[INFO] Best Fit Pdf = " << bestFitPdfIndex << ", " << storedPdfs.at(bestFitPdfIndex)->GetName() << std::endl;
 	    std::cout << "// ------------------------------------------------------------------------- //" <<std::endl;
-	    std::cout << "[INFO] Simple check of index "<< simplebestFitPdfIndex <<std::endl;
+	    //std::cout << "[INFO] Simple check of index "<< simplebestFitPdfIndex <<std::endl;
 	  
 	    mass->setBins(nBinsForMass);
-	    RooDataHist dataBinned(Form("roohist_data_mass_%s",catname.c_str()),"data",*mass,*dataFull);
+	    RooDataHist dataBinned(Form("roohist_data_mass_%s",catname.c_str()),"data",*mass,hadronicData[cat]);
 	    
 	    // Save it (also a binned version of the dataset
-	    outputws->import(*pdf);
+	    outputws->Print();
+
+	    cout << "here" << endl;
+	    outputws->import(*pdf, RecycleConflictNodes());
+	    cout << "here" << endl;
+	    outputws->Print();
 	    outputws->import(nBackground);
-	    outputws->import(catIndex);
+	    outputws->import(catIndex, RecycleConflictNodes());
+
 	    outputws->import(dataBinned);
-	    outputws->import(*data);
-	    plot(mass,pdf,&catIndex,data,Form("%s/multipdf_%s",outDir.c_str(),catname.c_str()),flashggCats_,cat,bestFitPdfIndex);
-	    */
+	    outputws->import(hadronicData[cat]);
+
+	    outputws->Print();
+	    
+	    //plot(mass,pdf,&catIndex,data,Form("%s/multipdf_%s",outDir.c_str(),catname.c_str()),flashggCats_,cat,bestFitPdfIndex);
+	    
 	  }
 	}
 	/*  		
