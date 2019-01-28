@@ -41,7 +41,7 @@ protected:
   Double_t evaluate() const;
 
 //private: // not neeed in cmssw 7xx ?
- // ClassDef(RooPowerLaw,1) // PowerLaw PDF
+ClassDef(RooPowerLaw,1) // PowerLaw PDF
 };
 
 #endif

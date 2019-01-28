@@ -297,7 +297,7 @@ RooAbsPdf* PdfModelBuilder::getPowerLawSingle(string prefix1, string prefix2, in
     RooArgList *pows = new RooArgList();
     for (int i=1; i<=nfracs; i++){
       string name =  Form("%s_f%d",prefix2.c_str(),i);
-      params.insert(pair<string,RooRealVar*>(name, new RooRealVar(name.c_str(),name.c_str(), 0.9, 0., 1.)));
+      params.insert(pair<string,RooRealVar*>(name, new RooRealVar(name.c_str(),name.c_str(), 0.2, 0., 1.)));
       //      params[name]->removeRange();
       fracs->add(*params[name]);
     }
@@ -392,7 +392,7 @@ RooAbsPdf* PdfModelBuilder::getLaurentSeries(string prefix1, string prefix2,int 
   // first do 0th order
   RooArgList *pows = new RooArgList();
   RooArgList *plist = new RooArgList();
-  string pname =  Form("%s_pow0",prefix2.c_str());
+  string pname =  Form("%s_pow0",prefix1.c_str());
   //utilities.insert(pair<string,RooAbsPdf*>(pname, new RooPower(pname.c_str(),pname.c_str(),*obs_formulavar,RooConst(-4.))));
   if (obs_formulavar_set) utilities.insert(pair<string,RooAbsPdf*>(pname, new RooPower(pname.c_str(),pname.c_str(),*obs_formulavar,RooConst(-4.))));
   if (obs_var_set) utilities.insert(pair<string,RooAbsPdf*>(pname, new RooPower(pname.c_str(),pname.c_str(),*obs_var,RooConst(-4.))));
@@ -403,7 +403,7 @@ RooAbsPdf* PdfModelBuilder::getLaurentSeries(string prefix1, string prefix2,int 
     string name = Form("%s_l%d",prefix2.c_str(),i);
     params.insert(pair<string,RooRealVar*>(name, new RooRealVar(name.c_str(),name.c_str(),0.25/order,0.000001,0.999999)));
     plist->add(*params[name]);
-    string pname =  Form("%s_powl%d",prefix2.c_str(),i);
+    string pname =  Form("%s_powl%d",prefix1.c_str(),i);
     //utilities.insert(pair<string,RooAbsPdf*>(pname, new RooPower(pname.c_str(),pname.c_str(),*obs_formulavar,RooConst(-4.+i))));
     if (obs_formulavar_set) utilities.insert(pair<string,RooAbsPdf*>(pname, new RooPower(pname.c_str(),pname.c_str(),*obs_formulavar,RooConst(-4.+i))));
     if (obs_var_set) utilities.insert(pair<string,RooAbsPdf*>(pname, new RooPower(pname.c_str(),pname.c_str(),*obs_var,RooConst(-4.+i))));
@@ -414,13 +414,13 @@ RooAbsPdf* PdfModelBuilder::getLaurentSeries(string prefix1, string prefix2,int 
     string name = Form("%s_h%d",prefix2.c_str(),i);
     params.insert(pair<string,RooRealVar*>(name, new RooRealVar(name.c_str(),name.c_str(),0.25/order,0.000001,0.999999)));
     plist->add(*params[name]);
-    string pname =  Form("%s_powh%d",prefix2.c_str(),i);
+    string pname =  Form("%s_powh%d",prefix1.c_str(),i);
     //utilities.insert(pair<string,RooAbsPdf*>(pname, new RooPower(pname.c_str(),pname.c_str(),*obs_formulavar,RooConst(-4.+i))));
     if (obs_formulavar_set) utilities.insert(pair<string,RooAbsPdf*>(pname, new RooPower(pname.c_str(),pname.c_str(),*obs_formulavar,RooConst(-4.+i))));
     if (obs_var_set) utilities.insert(pair<string,RooAbsPdf*>(pname, new RooPower(pname.c_str(),pname.c_str(),*obs_var,RooConst(-4.+i))));
     pows->add(*utilities[pname]);
   }
-  RooAddPdf *pdf = new RooAddPdf(prefix1.c_str(),prefix1.c_str(),*pows,*plist,true);
+  RooAddPdf *pdf = new RooAddPdf(prefix1.c_str(),prefix1.c_str(),*pows,*plist,false);
   return pdf;
   //bkgPdfs.insert(pair<string,RooAbsPdf*>(pdf->GetName(),pdf));
 }
@@ -529,7 +529,6 @@ RooAbsPdf* PdfModelBuilder::getExponentialSingle(string prefix1, string prefix2,
     }
 
     RooAbsPdf *exp;
-
     
     vector<RooAbsPdf*> tmpPdfs;
     for (int i = 1; i <= nexps; i++) {
@@ -537,13 +536,6 @@ RooAbsPdf* PdfModelBuilder::getExponentialSingle(string prefix1, string prefix2,
 	RooRealVar* tau = new RooRealVar(prefix2.c_str(),prefix2.c_str(),-0.0224,-1.,0.);
 	RooExponential* exp_ = new RooExponential(Form("%s_e1",prefix1.c_str()), "",*obs_formulavar,*tau);
 	tmpPdfs.push_back(exp_);
-	//	tmpPdfs.push_back(utilities[Form("%s_e%d",prefix1.c_str(),i)]);
-
-	cout << "----===----" << endl;
-	exp_->Print("v");
-	utilities[Form("%s_e%d",prefix1.c_str(),i)]->Print("v");
-	cout << "----===----" << endl;
-
       }
       else {
 	

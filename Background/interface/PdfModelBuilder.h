@@ -95,6 +95,7 @@ class PdfModelBuilder {
     RooRealVar *obs_var;
     RooFormulaVar *obs_formulavar;
     bool obs_var_set;
+    bool obs_formulavar_set;
     RooRealVar *signalModifier;
     bool signal_modifier_set;
     bool signal_set;

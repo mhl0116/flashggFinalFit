@@ -731,7 +731,7 @@ void plot(RooRealVar *mass, RooMultiPdf *pdfs, RooCategory *catIndex, RooDataSet
     else {col=kBlack; style++;}
     catIndex->setIndex(icat);
     pdfs->getCurrentPdf()->fitTo(*data,RooFit::Minos(0),RooFit::Minimizer("Minuit2","minimize"),RooFit::SumW2Error(kTRUE));	 //FIXME
-    pdfs->getCurrentPdf()->plotOn(plot,LineColor(col),LineStyle(style));//,RooFit::NormRange("fitdata_1,fitdata_2"));
+    pdfs->getCurrentPdf()->plotOn(plot,LineColor(col),LineStyle(style),RooFit::Range("unblindReg_1,unblindReg_2"));
     TObject *pdfLeg = plot->getObject(int(plot->numItems()-1));
     std::string ext = "";
     if (bestFitPdf==icat) {
@@ -829,7 +829,7 @@ void plot(RooRealVar *mass, map<string,RooAbsPdf*> pdfs, RooDataSet *data, strin
     int col;
     if (i<=6) col=color[i];
     else {col=kBlack; style++;}
-    it->second->plotOn(plot,LineColor(col),LineStyle(style));//,RooFit::NormRange("fitdata_1,fitdata_2"));
+    it->second->plotOn(plot,LineColor(col),LineStyle(style),RooFit::Range("fitdata_1,fitdata_2"));
     TObject *pdfLeg = plot->getObject(int(plot->numItems()-1));
     std::string ext = "";
     if (bestFitPdf==i) ext=" (Best Fit Pdf) ";
@@ -1517,7 +1517,7 @@ vector<string> flashggCats_;
 
 	    outputws->Print();
 	    
-	    //plot(mass,pdf,&catIndex,data,Form("%s/multipdf_%s",outDir.c_str(),catname.c_str()),flashggCats_,cat,bestFitPdfIndex);
+	    plot(mass,pdf,&catIndex,&(hadronicData[cat]),Form("%s/multipdf_%s",outDir.c_str(),catname.c_str()),flashggCats_,cat,bestFitPdfIndex);
 	    
 	  }
 	}
